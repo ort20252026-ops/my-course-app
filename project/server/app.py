@@ -1,12 +1,17 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-DATA_FILE = "data.json"
+# пути
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+WEB_DIR = os.path.join(BASE_DIR, "../web")
+DATA_FILE = os.path.join(BASE_DIR, "data.json")
 
+# ---------- работа с данными ----------
 def load_data():
     try:
         with open(DATA_FILE, "r") as f:
@@ -18,6 +23,16 @@ def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
+# ---------- FRONTEND (сайт) ----------
+@app.route("/")
+def index():
+    return send_from_directory(WEB_DIR, "index.html")
+
+@app.route("/<path:path>")
+def static_files(path):
+    return send_from_directory(WEB_DIR, path)
+
+# ---------- API ----------
 @app.route("/courses")
 def get_courses():
     return jsonify(load_data()["courses"])
@@ -66,7 +81,7 @@ def delete_lesson():
     save_data(data)
     return jsonify({"status": "deleted"})
 
-# 🔒 получение видео через сервер (защита)
+# получение видео
 @app.route("/get_video")
 def get_video():
     course_id = int(request.args.get("course_id"))
@@ -80,5 +95,7 @@ def get_video():
             return jsonify({"video": video})
 
     return jsonify({"error": "not found"})
+
+# ---------- запуск ----------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
