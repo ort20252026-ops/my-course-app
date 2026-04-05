@@ -1,0 +1,28 @@
+body {
+    font-family: Arial;
+    background: #f0f2f5;
+    padding: 10px;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+button {
+    background: #2AABEE;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 5px 0;
+    width: 100%;
+}
+
+textarea {
+    width: 100%;
+    height: 80px;
+    margin-top: 10px;
+}

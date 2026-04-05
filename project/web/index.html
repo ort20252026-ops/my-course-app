@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ORT 2025-2026</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0f0f0f;
+    color: white;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    background: #202020;
+}
+
+.layout {
+    display: flex;
+    height: calc(100vh - 60px);
+}
+
+.sidebar {
+    width: 280px;
+    background: #181818;
+    overflow-y: auto;
+}
+
+.lesson {
+    padding: 14px;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+}
+
+.lesson:hover {
+    background: #2a2a2a;
+}
+
+.lesson.active {
+    background: #333;
+}
+
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.player-wrapper {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: black;
+}
+
+.player {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.controls {
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.card {
+    background: #1c1c1c;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 10px;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: red;
+    color: white;
+    cursor: pointer;
+}
+
+input {
+    padding: 10px;
+    width: 100%;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+.title {
+    padding: 10px;
+}
+</style>
+
+</head>
+
+<body oncontextmenu="return false">
+
+<div class="header" id="header"></div>
+<div id="app"></div>
+
+<script>
+let API = "http://127.0.0.1:5000";
+
+// telegram
+let tg = window.Telegram ? window.Telegram.WebApp : null;
+let user = tg?.initDataUnsafe?.user;
+
+let ADMIN_ID = 7815924288;
+let isAdmin = user && user.id == ADMIN_ID;
+
+// header
+document.getElementById("header").innerHTML = `
+    <span>🎓 ORT 2025-2026</span>
+    ${isAdmin ? '<button onclick="openAdmin()">⚙️</button>' : ''}
+`;
+
+// загрузка курсов
+async function loadCourses() {
+    let res = await fetch(API + "/courses");
+    let courses = await res.json();
+
+    let app = document.getElementById("app");
+    app.innerHTML = "";
+
+    courses.forEach(c => {
+        let div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+            <h3>${c.title}</h3>
+            <button onclick="openCourse(${c.id})">Открыть</button>
+        `;
+
+        app.appendChild(div);
+    });
+
+    window.courses = courses;
+}
+
+loadCourses();
+
+// открыть курс
+function openCourse(id) {
+    let course = window.courses.find(c => c.id == id);
+
+    let savedIndex = localStorage.getItem("lesson_" + id) || 0;
+
+    document.getElementById("app").innerHTML = `
+        <div class="layout">
+            <div class="sidebar" id="lessons"></div>
+            <div class="main">
+                <div class="player-wrapper">
+                    <iframe class="player" id="player" allowfullscreen></iframe>
+                </div>
+                <div class="title" id="lessonTitle"></div>
+                <div class="controls">
+                    <button onclick="prevLesson()">⬅️</button>
+                    <button onclick="nextLesson()">➡️</button>
+                    <button onclick="loadCourses()">🏠</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    let player = document.getElementById("player");
+    let lessonsDiv = document.getElementById("lessons");
+    let lessonTitle = document.getElementById("lessonTitle");
+
+    let currentIndex = Number(savedIndex);
+
+    async function play(index) {
+        currentIndex = index;
+        localStorage.setItem("lesson_" + id, index);
+
+        let res = await fetch(API + "/get_video?course_id=" + id + "&index=" + index);
+        let data = await res.json();
+
+        let video = data.video;
+
+        player.src = video.replace("watch?v=", "embed/");
+        lessonTitle.innerText = course.lessons[index].title;
+
+        document.querySelectorAll(".lesson").forEach((el, i) => {
+            el.classList.toggle("active", i === index);
+        });
+    }
+
+    window.nextLesson = () => {
+        if (currentIndex + 1 < course.lessons.length) {
+            play(currentIndex + 1);
+        }
+    };
+
+    window.prevLesson = () => {
+        if (currentIndex - 1 >= 0) {
+            play(currentIndex - 1);
+        }
+    };
+
+    course.lessons.forEach((l, i) => {
+        let div = document.createElement("div");
+        div.className = "lesson";
+        div.innerText = l.title;
+
+        div.onclick = () => play(i);
+
+        lessonsDiv.appendChild(div);
+    });
+
+    if (course.lessons.length > 0) {
+        play(currentIndex);
+    }
+}
+
+// админка
+function openAdmin() {
+    document.getElementById("app").innerHTML = `
+        <div class="card">
+            <h3>Создать курс</h3>
+            <input id="title" placeholder="Название курса">
+            <button onclick="createCourse()">Создать</button>
+        </div>
+
+        <div id="adminCourses"></div>
+
+        <button onclick="loadCourses()">⬅️ Назад</button>
+    `;
+
+    loadAdminCourses();
+}
+
+async function loadAdminCourses() {
+    let res = await fetch(API + "/courses");
+    let courses = await res.json();
+
+    let container = document.getElementById("adminCourses");
+    container.innerHTML = "";
+
+    courses.forEach(c => {
+        let div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+            <h3>${c.title}</h3>
+            <button onclick="openCourseAdmin(${c.id})">Управлять</button>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+async function createCourse() {
+    let title = document.getElementById("title").value;
+
+    await fetch(API + "/add_course", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({title})
+    });
+
+    alert("Курс создан");
+    openAdmin();
+}
+
+function openCourseAdmin(id) {
+    document.getElementById("app").innerHTML = `
+        <div class="card">
+            <h3>Добавить урок</h3>
+            <input id="title" placeholder="Название урока">
+            <input id="video" placeholder="YouTube ссылка">
+            <button onclick="addLesson(${id})">Добавить</button>
+        </div>
+
+        <div id="lessonList"></div>
+
+        <button onclick="openAdmin()">⬅️ Назад</button>
+    `;
+
+    loadLessonsAdmin(id);
+}
+
+async function loadLessonsAdmin(course_id) {
+    let res = await fetch(API + "/courses");
+    let courses = await res.json();
+    let course = courses.find(c => c.id == course_id);
+
+    let container = document.getElementById("lessonList");
+    container.innerHTML = "";
+
+    course.lessons.forEach((l, i) => {
+        let div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+            <h4>${l.title}</h4>
+            <button onclick="deleteLesson(${course_id}, ${i})">❌ Удалить</button>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+async function addLesson(course_id) {
+    let title = document.getElementById("title").value;
+    let video = document.getElementById("video").value;
+
+    await fetch(API + "/add_lesson", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({course_id, title, video})
+    });
+
+    alert("Урок добавлен");
+    openCourseAdmin(course_id);
+}
+
+async function deleteLesson(course_id, index) {
+    await fetch(API + "/delete_lesson", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({course_id, index})
+    });
+
+    openCourseAdmin(course_id);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,12 @@
+CREATE TABLE courses (
+    id INTEGER PRIMARY KEY,
+    title TEXT
+);
+
+CREATE TABLE lessons (
+    id INTEGER PRIMARY KEY,
+    course_id INTEGER,
+    video TEXT
+);
+
+.quit
