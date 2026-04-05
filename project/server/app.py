@@ -80,10 +80,5 @@ def get_video():
             return jsonify({"video": video})
 
     return jsonify({"error": "not found"})
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-if __name__ == "__main__":
-    app.run()
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
