@@ -1,333 +1,241 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>ORT 2025-2026</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auth</title>
 
 <style>
 body {
     margin: 0;
     font-family: Arial;
-    background: #0f0f0f;
-    color: white;
-}
-
-.header {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    height: 100vh;
     display: flex;
-    justify-content: space-between;
-    padding: 15px;
-    background: #202020;
+    justify-content: center;
+    align-items: center;
 }
 
-.layout {
-    display: flex;
-    height: calc(100vh - 60px);
-}
-
-.sidebar {
-    width: 280px;
-    background: #181818;
-    overflow-y: auto;
-}
-
-.lesson {
-    padding: 14px;
-    border-bottom: 1px solid #333;
-    cursor: pointer;
-}
-
-.lesson:hover {
-    background: #2a2a2a;
-}
-
-.lesson.active {
-    background: #333;
-}
-
-.main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.player-wrapper {
-    width: 100%;
-    aspect-ratio: 16/9;
-    background: black;
-}
-
-.player {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-.controls {
-    padding: 10px;
-    display: flex;
-    gap: 10px;
-}
-
+/* CARD */
 .card {
-    background: #1c1c1c;
-    padding: 15px;
-    margin: 10px;
-    border-radius: 10px;
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    width: 320px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: fade 0.4s ease;
 }
 
+@keyframes fade {
+    from {opacity:0; transform: translateY(20px);}
+    to {opacity:1; transform: translateY(0);}
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* INPUT */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 6px 0;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    outline: none;
+}
+
+input:focus {
+    border-color: #6366f1;
+}
+
+/* BUTTON */
 button {
-    padding: 10px;
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
     border: none;
-    border-radius: 8px;
-    background: red;
+    border-radius: 10px;
+    background: #6366f1;
     color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #4f46e5;
+}
+
+/* LINK */
+.switch {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.switch span {
+    color: #6366f1;
     cursor: pointer;
 }
 
-input {
-    padding: 10px;
-    width: 100%;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    border: none;
+/* ERROR */
+.error {
+    color: red;
+    font-size: 12px;
 }
 
-.title {
-    padding: 10px;
+/* HIDE */
+.hidden {
+    display: none;
 }
 </style>
-
 </head>
+<body>
 
-<body oncontextmenu="return false">
+<div class="card">
 
-<div class="header" id="header"></div>
-<div id="app"></div>
+    <!-- LOGIN -->
+    <div id="loginForm">
+        <h2>Вход</h2>
+
+        <input id="loginEmail" placeholder="Email">
+        <div id="loginEmailErr" class="error"></div>
+
+        <input id="loginPass" type="password" placeholder="Пароль">
+        <div id="loginPassErr" class="error"></div>
+
+        <button onclick="login()">Войти</button>
+
+        <div class="switch">
+            Нет аккаунта? <span onclick="showRegister()">Регистрация</span>
+        </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" class="hidden">
+        <h2>Регистрация</h2>
+
+        <input id="name" placeholder="Имя">
+        <div id="nameErr" class="error"></div>
+
+        <input id="email" placeholder="Email">
+        <div id="emailErr" class="error"></div>
+
+        <input id="password" type="password" placeholder="Пароль">
+        <div id="passErr" class="error"></div>
+
+        <input id="confirm" type="password" placeholder="Повторите пароль">
+        <div id="confirmErr" class="error"></div>
+
+        <button onclick="register()">Зарегистрироваться</button>
+
+        <div class="switch">
+            Уже есть аккаунт? <span onclick="showLogin()">Вход</span>
+        </div>
+    </div>
+
+</div>
 
 <script>
-let API = "http://127.0.0.1:5000";
-
-// telegram
-let tg = window.Telegram ? window.Telegram.WebApp : null;
-let user = tg?.initDataUnsafe?.user;
-
-let ADMIN_ID = 7815924288;
-let isAdmin = user && user.id == ADMIN_ID;
-
-// header
-document.getElementById("header").innerHTML = `
-    <span>🎓 ORT 2025-2026</span>
-    ${isAdmin ? '<button onclick="openAdmin()">⚙️</button>' : ''}
-`;
-
-// загрузка курсов
-async function loadCourses() {
-    let res = await fetch(API + "/courses");
-    let courses = await res.json();
-
-    let app = document.getElementById("app");
-    app.innerHTML = "";
-
-    courses.forEach(c => {
-        let div = document.createElement("div");
-        div.className = "card";
-
-        div.innerHTML = `
-            <h3>${c.title}</h3>
-            <button onclick="openCourse(${c.id})">Открыть</button>
-        `;
-
-        app.appendChild(div);
-    });
-
-    window.courses = courses;
+function showRegister() {
+    document.getElementById("loginForm").classList.add("hidden");
+    document.getElementById("registerForm").classList.remove("hidden");
 }
 
-loadCourses();
+function showLogin() {
+    document.getElementById("registerForm").classList.add("hidden");
+    document.getElementById("loginForm").classList.remove("hidden");
+}
 
-// открыть курс
-function openCourse(id) {
-    let course = window.courses.find(c => c.id == id);
+function validateEmail(email) {
+    return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+}
 
-    let savedIndex = localStorage.getItem("lesson_" + id) || 0;
+/* REGISTER */
+function register() {
+    let name = document.getElementById("name").value;
+    let email = document.getElementById("email").value;
+    let password = document.getElementById("password").value;
+    let confirm = document.getElementById("confirm").value;
 
-    document.getElementById("app").innerHTML = `
-        <div class="layout">
-            <div class="sidebar" id="lessons"></div>
-            <div class="main">
-                <div class="player-wrapper">
-                    <iframe class="player" id="player" allowfullscreen></iframe>
-                </div>
-                <div class="title" id="lessonTitle"></div>
-                <div class="controls">
-                    <button onclick="prevLesson()">⬅️</button>
-                    <button onclick="nextLesson()">➡️</button>
-                    <button onclick="loadCourses()">🏠</button>
-                </div>
-            </div>
-        </div>
-    `;
+    let ok = true;
 
-    let player = document.getElementById("player");
-    let lessonsDiv = document.getElementById("lessons");
-    let lessonTitle = document.getElementById("lessonTitle");
+    document.getElementById("nameErr").innerText = "";
+    document.getElementById("emailErr").innerText = "";
+    document.getElementById("passErr").innerText = "";
+    document.getElementById("confirmErr").innerText = "";
 
-    let currentIndex = Number(savedIndex);
-
-    async function play(index) {
-        currentIndex = index;
-        localStorage.setItem("lesson_" + id, index);
-
-        let res = await fetch(API + "/get_video?course_id=" + id + "&index=" + index);
-        let data = await res.json();
-
-        let video = data.video;
-
-        player.src = video.replace("watch?v=", "embed/");
-        lessonTitle.innerText = course.lessons[index].title;
-
-        document.querySelectorAll(".lesson").forEach((el, i) => {
-            el.classList.toggle("active", i === index);
-        });
+    if (name === "") {
+        document.getElementById("nameErr").innerText = "Введите имя";
+        ok = false;
     }
 
-    window.nextLesson = () => {
-        if (currentIndex + 1 < course.lessons.length) {
-            play(currentIndex + 1);
-        }
-    };
-
-    window.prevLesson = () => {
-        if (currentIndex - 1 >= 0) {
-            play(currentIndex - 1);
-        }
-    };
-
-    course.lessons.forEach((l, i) => {
-        let div = document.createElement("div");
-        div.className = "lesson";
-        div.innerText = l.title;
-
-        div.onclick = () => play(i);
-
-        lessonsDiv.appendChild(div);
-    });
-
-    if (course.lessons.length > 0) {
-        play(currentIndex);
+    if (!validateEmail(email)) {
+        document.getElementById("emailErr").innerText = "Неверный email";
+        ok = false;
     }
+
+    if (password.length < 8) {
+        document.getElementById("passErr").innerText = "Минимум 8 символов";
+        ok = false;
+    }
+
+    if (password !== confirm) {
+        document.getElementById("confirmErr").innerText = "Пароли не совпадают";
+        ok = false;
+    }
+
+    if (!ok) return;
+
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+
+    users.push({ name, email, password, is_admin: 0 });
+
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("Регистрация успешна");
+
+    showLogin();
 }
 
-// админка
-function openAdmin() {
-    document.getElementById("app").innerHTML = `
-        <div class="card">
-            <h3>Создать курс</h3>
-            <input id="title" placeholder="Название курса">
-            <button onclick="createCourse()">Создать</button>
-        </div>
+/* LOGIN */
+function login() {
+    let email = document.getElementById("loginEmail").value;
+    let password = document.getElementById("loginPass").value;
 
-        <div id="adminCourses"></div>
+    let ok = true;
 
-        <button onclick="loadCourses()">⬅️ Назад</button>
-    `;
+    document.getElementById("loginEmailErr").innerText = "";
+    document.getElementById("loginPassErr").innerText = "";
 
-    loadAdminCourses();
-}
+    if (!validateEmail(email)) {
+        document.getElementById("loginEmailErr").innerText = "Неверный email";
+        ok = false;
+    }
 
-async function loadAdminCourses() {
-    let res = await fetch(API + "/courses");
-    let courses = await res.json();
+    if (password.length < 8) {
+        document.getElementById("loginPassErr").innerText = "Минимум 8 символов";
+        ok = false;
+    }
 
-    let container = document.getElementById("adminCourses");
-    container.innerHTML = "";
+    if (!ok) return;
 
-    courses.forEach(c => {
-        let div = document.createElement("div");
-        div.className = "card";
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
 
-        div.innerHTML = `
-            <h3>${c.title}</h3>
-            <button onclick="openCourseAdmin(${c.id})">Управлять</button>
-        `;
+    let user = users.find(u => u.email === email && u.password === password);
 
-        container.appendChild(div);
-    });
-}
+    if (!user) {
+        alert("Неверный логин или пароль");
+        return;
+    }
 
-async function createCourse() {
-    let title = document.getElementById("title").value;
+    localStorage.setItem("currentUser", JSON.stringify(user));
 
-    await fetch(API + "/add_course", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({title})
-    });
+    alert("Ты вошёл ✅");
 
-    alert("Курс создан");
-    openAdmin();
-}
-
-function openCourseAdmin(id) {
-    document.getElementById("app").innerHTML = `
-        <div class="card">
-            <h3>Добавить урок</h3>
-            <input id="title" placeholder="Название урока">
-            <input id="video" placeholder="YouTube ссылка">
-            <button onclick="addLesson(${id})">Добавить</button>
-        </div>
-
-        <div id="lessonList"></div>
-
-        <button onclick="openAdmin()">⬅️ Назад</button>
-    `;
-
-    loadLessonsAdmin(id);
-}
-
-async function loadLessonsAdmin(course_id) {
-    let res = await fetch(API + "/courses");
-    let courses = await res.json();
-    let course = courses.find(c => c.id == course_id);
-
-    let container = document.getElementById("lessonList");
-    container.innerHTML = "";
-
-    course.lessons.forEach((l, i) => {
-        let div = document.createElement("div");
-        div.className = "card";
-
-        div.innerHTML = `
-            <h4>${l.title}</h4>
-            <button onclick="deleteLesson(${course_id}, ${i})">❌ Удалить</button>
-        `;
-
-        container.appendChild(div);
-    });
-}
-
-async function addLesson(course_id) {
-    let title = document.getElementById("title").value;
-    let video = document.getElementById("video").value;
-
-    await fetch(API + "/add_lesson", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({course_id, title, video})
-    });
-
-    alert("Урок добавлен");
-    openCourseAdmin(course_id);
-}
-
-async function deleteLesson(course_id, index) {
-    await fetch(API + "/delete_lesson", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({course_id, index})
-    });
-
-    openCourseAdmin(course_id);
+    // дальше будет переход
 }
 </script>
 
