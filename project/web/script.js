@@ -1,3 +1,20 @@
+/* ДОБАВЛЯЕМ АДМИНА АВТО */
+(function() {
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+
+    let exists = users.find(u => u.email === "user614362");
+
+    if (!exists) {
+        users.push({
+            name: "fol",
+            email: "user614362",
+            password: "ppjquc",
+            is_admin: 1
+        });
+
+        localStorage.setItem("users", JSON.stringify(users));
+    }
+})();
 <script>
 window.onload = () => {
 
