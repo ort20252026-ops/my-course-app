@@ -11,13 +11,13 @@ CORS(app)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEB_DIR = os.path.join(BASE_DIR, "../web")
 DATA_FILE = os.path.join(BASE_DIR, "data.json")
-DB_FILE = os.path.join(BASE_DIR, "../database/db.sqlite3")
-
+DB_FILE = os.path.join(BASE_DIR, "db.sqlite3")
+os.makedirs(BASE_DIR, exist_ok=True)
 OWNER_ID = 7815924288  # ⚠️ ВСТАВЬ СВОЙ TELEGRAM ID
 
 # ---------- БАЗА ----------
 def get_db():
-    return sqlite3.connect(DB_FILE)
+    return sqlite3.connect(DB_FILE, check_same_thread=False)
 
 def init_db():
     conn = get_db()
