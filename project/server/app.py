@@ -1,3 +1,10 @@
+import sqlite3
+
+DB_FILE = os.path.join(BASE_DIR, "../database/db.sqlite3")
+
+def get_db():
+    return sqlite3.connect(DB_FILE)
+    
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
