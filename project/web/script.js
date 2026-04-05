@@ -1,50 +1,21 @@
-/* ДОБАВЛЯЕМ АДМИНА АВТО */
-(function() {
-    let users = JSON.parse(localStorage.getItem("users") || "[]");
-
-    let exists = users.find(u => u.email === "user614362");
-
-    if (!exists) {
-        users.push({
-            name: "fol",
-            email: "user614362",
-            password: "ppjquc",
-            is_admin: 1
-        });
-
-        localStorage.setItem("users", JSON.stringify(users));
-    }
-})();
-<script>
+/* TELEGRAM INIT */
 window.onload = () => {
-
-    let tg = window.Telegram.WebApp;
+    const tg = window.Telegram.WebApp;
+    tg.ready();
     tg.expand();
 
-    // ⚠️ временно всегда админ (чтобы кнопка точно была)
-    let isAdmin = true;
+    // ⚠️ ПОСТАВЬ СЮДА СВОЙ РЕАЛЬНЫЙ СЕРВЕР
+    const API = "https://твой-сервер.onrender.com"; // ← ВАЖНО
 
-    let API = "http://127.0.0.1:5000";
-
-    // создаём контейнер если нет
     let container = document.getElementById("courses");
+
     if (!container) {
         container = document.createElement("div");
         container.id = "courses";
         document.body.appendChild(container);
     }
 
-    // кнопка админ панели
-    if (isAdmin) {
-        let btn = document.createElement("button");
-        btn.innerText = "⚙️ Админ панель";
-        btn.style.padding = "10px";
-        btn.style.margin = "10px";
-        btn.onclick = openAdmin;
-        document.body.prepend(btn);
-    }
-
-    // загрузка курсов
+    /* ЗАГРУЗКА КУРСОВ */
     async function loadCourses() {
         try {
             let res = await fetch(API + "/courses");
@@ -54,9 +25,11 @@ window.onload = () => {
 
             courses.forEach(course => {
                 let div = document.createElement("div");
-                div.style.border = "1px solid #ccc";
-                div.style.padding = "10px";
-                div.style.margin = "10px";
+
+                div.style.background = "white";
+                div.style.padding = "12px";
+                div.style.margin = "10px 0";
+                div.style.borderRadius = "10px";
 
                 div.innerHTML = `
                     <h3>${course.title}</h3>
@@ -67,60 +40,76 @@ window.onload = () => {
             });
 
             window.courses = courses;
+
         } catch (e) {
-            console.log("Ошибка загрузки:", e);
+            console.log("Ошибка:", e);
+            alert("❌ Сервер не работает");
         }
     }
 
     loadCourses();
 
-    // открыть курс
+    /* ОТКРЫТЬ КУРС */
     window.openCourse = function(id) {
         let course = window.courses.find(c => c.id == id);
 
-        document.body.innerHTML = `<h2>${course.title}</h2>
-        <button onclick="location.reload()">⬅️ Назад</button>`;
+        document.body.innerHTML = `
+            <button onclick="location.reload()">⬅ Назад</button>
+            <h2>${course.title}</h2>
+            <div id="videos"></div>
+        `;
+
+        let videos = document.getElementById("videos");
 
         course.lessons.forEach(l => {
+            let videoId = getYouTubeId(l.video);
+
             let div = document.createElement("div");
+            div.style.marginBottom = "15px";
 
             div.innerHTML = `
-                <iframe width="100%" height="200"
-                src="${l.video.replace("watch?v=", "embed/")}"
+                <iframe width="100%" height="220"
+                src="https://www.youtube.com/embed/${videoId}"
                 frameborder="0"
                 allowfullscreen></iframe>
             `;
 
-            document.body.appendChild(div);
+            videos.appendChild(div);
         });
+    };
+
+    /* YOUTUBE ID */
+    function getYouTubeId(url) {
+        let match = url.match(/(?:v=|youtu\\.be\\/)([^&]+)/);
+        return match ? match[1] : url;
     }
 
-    // админ панель
-    function openAdmin() {
+    /* АДМИН */
+    window.openAdmin = function() {
         document.body.innerHTML = `
             <h2>⚙️ Админ панель</h2>
+
             <button onclick="addCourse()">➕ Курс</button>
             <button onclick="addLesson()">➕ Урок</button>
-            <button onclick="location.reload()">⬅️ Назад</button>
+            <button onclick="location.reload()">⬅ Назад</button>
         `;
-    }
+    };
 
-    // добавить курс
+    /* ДОБАВИТЬ КУРС */
     window.addCourse = async function() {
         let title = prompt("Название курса:");
-
         if (!title) return;
 
         await fetch(API + "/add_course", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({title})
+            body: JSON.stringify({ title })
         });
 
-        alert("Курс добавлен");
-    }
+        alert("✅ Курс добавлен");
+    };
 
-    // добавить урок
+    /* ДОБАВИТЬ УРОК */
     window.addLesson = async function() {
         let course_id = prompt("ID курса:");
         let video = prompt("YouTube ссылка:");
@@ -130,11 +119,9 @@ window.onload = () => {
         await fetch(API + "/add_lesson", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({course_id, video})
+            body: JSON.stringify({ course_id, video })
         });
 
-        alert("Урок добавлен");
-    }
-
-}
-</script>
+        alert("✅ Урок добавлен");
+    };
+};
