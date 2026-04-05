@@ -5,7 +5,7 @@ window.onload = () => {
     tg.expand();
 
     // ⚠️ ПОСТАВЬ СЮДА СВОЙ РЕАЛЬНЫЙ СЕРВЕР
-    const API = "https://твой-сервер.onrender.com"; // ← ВАЖНО
+    const API = "https://my-course-app-8w99.onrender.com"; // ← ВАЖНО
 
     let container = document.getElementById("courses");
 
