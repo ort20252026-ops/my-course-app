@@ -13,7 +13,7 @@ WEB_DIR = os.path.join(BASE_DIR, "../web")
 DATA_FILE = os.path.join(BASE_DIR, "data.json")
 DB_FILE = os.path.join(BASE_DIR, "../database/db.sqlite3")
 
-OWNER_ID = 123456789  # ⚠️ ВСТАВЬ СВОЙ TELEGRAM ID
+OWNER_ID = 7815924288  # ⚠️ ВСТАВЬ СВОЙ TELEGRAM ID
 
 # ---------- БАЗА ----------
 def get_db():
